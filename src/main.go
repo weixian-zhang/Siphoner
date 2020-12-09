@@ -7,7 +7,20 @@ func main() {
 
 	Stdlog = &StdLog{}
 	Stdlog.Init()
+	
+	initKubeClientSet()
 
-	err :=  GetPodLogs("default", "nginx", "")
-	Stdlog.Err(err)
+	ns := []string{"dev", "default"}
+	podL := make(map[string]string)
+	podL["run"] = "helloworld"
+
+	pods, _ := GetPodsByFilteredNamespaces(ns, podL)
+
+	getPodLogs(pods)
+	
+	//Stdlog.Err(err)
+	
+
+	
+	// Stdlog.Err(err)
 }

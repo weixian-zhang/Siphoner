@@ -1,44 +1,96 @@
 package main
 
 import (
+	"time"
 	"flag"
 	"io"
 	"os"
 	"path/filepath"
-	//apimv1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	//"k8s.io/apimachinery/pkg/labels"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/api/core/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 )
 
-func GetPods() {
-	//https://stackoverflow.com/questions/51106923/labelselector-for-secrets-list-in-k8s
-	
-	// labelSelectors := apimv1.LabelSelector{MatchLabels: labels}
-	// podListOpts := apimv1.GetOptions {
-	// 	LabelSelector: labelSelectors,
-	// }
+var kubeclient *kubernetes.Clientset
 
-	// pod :=  v1.Pod{}
-	// pod.Ge
+func GetPodsByFilteredNamespaces(namespaces []string, podLabels map[string]string) ([]PodInfo, error) {
+	//https://stackoverflow.com/questions/51106923/labelselector-for-secrets-list-in-k8s
+
+	var pods []PodInfo
+	
+	//filter pods by labels if specified
+	labelSelector := metav1.LabelSelector{MatchLabels: podLabels}
+	podListOpts := metav1.ListOptions {
+		LabelSelector: labels.Set(labelSelector.MatchLabels).String(),
+	}
+
+	for _, ns := range namespaces {
+		podL, err := kubeclient.CoreV1().Pods(ns).List(podListOpts)
+		Stdlog.Err(err)
+
+		if err != nil {
+			return pods, err
+		}
+
+		for _, p := range podL.Items {
+
+			podInfo := PodInfo{
+				Namespace: p.Namespace,
+				Name: p.Name,
+				Labels: p.GetObjectMeta().GetLabels(),
+			}
+
+			for _, v := range p.Spec.Containers {
+				podInfo.ContainerNames = append(podInfo.ContainerNames, v.Name)
+			}
+
+			pods = append(pods, podInfo)
+		}
+	}
+
+	return pods, nil
 }
 
-func GetPodLogs(namespace string, name string, container string) (error) {
+func getPodLogs(pods []PodInfo) {
 
-	clientset, err := newClientSet()
+	for _, p := range pods {
+		for _, c := range p.ContainerNames {
+
+			
+			GetContainerLogs(p.Namespace, p.Name, c)
+
+		} 
+	}
+}
+
+func GetContainerLogs(namespace string, podName string, container string) (error) {
 	
-	Stdlog.Err(err)
+	// kubeTime := metav1.Time{Time: time.Now()}
+	// kubeTime.Add(-50 * time.Second)
+
+	getLogSinceTime := metav1.Time{Time: time.Now().Add(-3600 * time.Second)}
 
 	podLogOptions := v1.PodLogOptions{
 		Container: container,
+		Timestamps: true,
+		SinceTime: &getLogSinceTime,
 	}
 
-	podLogReq := clientset.CoreV1().Pods(namespace).GetLogs(name, &podLogOptions)
+	//https://stackoverflow.com/questions/47915287/where-are-kubernetes-pods-logfiles
+	//https://kubernetes.io/docs/concepts/cluster-administration/logging/
+	
+	podLogReq := kubeclient.CoreV1().Pods(namespace).GetLogs(podName, &podLogOptions)
 
 	ioReadCloser, err := podLogReq.Stream()
+
 	Stdlog.Err(err)
+	if err != nil {
+		return err
+	}
+
 	defer ioReadCloser.Close()
 
 	for {
@@ -65,10 +117,9 @@ func GetPodLogs(namespace string, name string, container string) (error) {
 	}
 
 	return err
-
 }
 
-func newClientSet() (*kubernetes.Clientset, error) {
+func initKubeClientSet() (error) {
 
 	homeDir := homeDir()
 	kubeconfig := flag.String("kubeconfig", filepath.Join(homeDir, ".kube", "config"), "kubeconfig file")
@@ -87,7 +138,7 @@ func newClientSet() (*kubernetes.Clientset, error) {
 		Stdlog.Err(err)
 
 		if err != nil {
-			return nil, err
+			return err
 		}
 
 		kubeConfig = inClusterConfig
@@ -97,16 +148,20 @@ func newClientSet() (*kubernetes.Clientset, error) {
 
 	clientset, err := kubernetes.NewForConfig(kubeConfig)
 
-	return clientset, err
+	if err == nil {
+		kubeclient = clientset
+	}
+
+	return err
 }
 
 func getConfigFromConfigMap(namespace string, name string) {
-
-	_, err := newClientSet()
-	Stdlog.Err(err)
-
 	
 	//configMap, err := kubeclient.CoreV1().ConfigMaps(namespace).Get(name, nil)
+}
+
+func getTerminusSecrets() {
+
 }
 
 

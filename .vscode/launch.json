@@ -5,11 +5,21 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "debug Go Queue",
+            "name": "debug Go",
             "type": "go",
             "request": "launch",
             "mode": "auto",
             "program": "${workspaceFolder}/src",
+            "env": {
+                "env" : "dev"
+            }
+        },
+        {
+            "name": "debug TestApp",
+            "type": "go",
+            "request": "launch",
+            "mode": "auto",
+            "program": "${workspaceFolder}/testapp",
             "env": {
                 "env" : "dev"
             }

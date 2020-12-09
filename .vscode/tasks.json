@@ -12,7 +12,16 @@
                 "cwd": "${workspaceFolder}/src"
             },
             "problemMatcher": []
+        },
+        {
+            "label": "Go build TestApp",
+            "command": "go build",
+            "type": "shell",
+            "args": [],
+            "options": {
+                "cwd": "${workspaceFolder}/testapp"
+            },
+            "problemMatcher": []
         }
-    
     ]
 }

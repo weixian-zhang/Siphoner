@@ -1,12 +1,9 @@
 package main
 
-type SiphonerConfig struct {
-	SiphonFrequencySeconds int	`yaml:"SiphonFrequencySeconds"`
-	ConfigNamespace string		`yaml:"ConfigMapNamespace"`
-	IncludeNamespaces []string 	`yaml:"IncludeNamespaces"`
-	IncludePodLabels []string 	`yaml:"IncludePodLabels"`
+type EventHubTerminusSecrets struct {
+
 }
 
-func NewDefaultConfig() {
+func NewConfig() {
 	
 }
