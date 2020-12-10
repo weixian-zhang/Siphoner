@@ -1,17 +1,22 @@
-package main
+package kube
 
 import (
-	"time"
 	"flag"
 	"io"
 	"os"
 	"path/filepath"
+	"time"
+
+	"k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
-	"k8s.io/api/core/v1"
+	"k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
+	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/tools/clientcmd"
+
+	"github.com/weixian-zhang/Siphoner/main"
 )
 
 var kubeclient *kubernetes.Clientset
@@ -19,7 +24,7 @@ var kubeclient *kubernetes.Clientset
 func GetPodsByFilteredNamespaces(namespaces []string, podLabels map[string]string) ([]PodInfo, error) {
 	//https://stackoverflow.com/questions/51106923/labelselector-for-secrets-list-in-k8s
 
-	var pods []PodInfo
+	var pods []main.PodInfo
 	
 	//filter pods by labels if specified
 	labelSelector := metav1.LabelSelector{MatchLabels: podLabels}
@@ -29,7 +34,7 @@ func GetPodsByFilteredNamespaces(namespaces []string, podLabels map[string]strin
 
 	for _, ns := range namespaces {
 		podL, err := kubeclient.CoreV1().Pods(ns).List(podListOpts)
-		Stdlog.Err(err)
+		main.Stdlog.Err(err)
 
 		if err != nil {
 			return pods, err
@@ -37,7 +42,7 @@ func GetPodsByFilteredNamespaces(namespaces []string, podLabels map[string]strin
 
 		for _, p := range podL.Items {
 
-			podInfo := PodInfo{
+			podInfo := main.PodInfo{
 				Namespace: p.Namespace,
 				Name: p.Name,
 				Labels: p.GetObjectMeta().GetLabels(),
@@ -54,7 +59,7 @@ func GetPodsByFilteredNamespaces(namespaces []string, podLabels map[string]strin
 	return pods, nil
 }
 
-func getPodLogs(pods []PodInfo) {
+func getPodLogs(pods []main.PodInfo) {
 
 	for _, p := range pods {
 		for _, c := range p.ContainerNames {
@@ -86,7 +91,7 @@ func GetContainerLogs(namespace string, podName string, container string) (error
 
 	ioReadCloser, err := podLogReq.Stream()
 
-	Stdlog.Err(err)
+	main.Stdlog.Err(err)
 	if err != nil {
 		return err
 	}
@@ -97,7 +102,7 @@ func GetContainerLogs(namespace string, podName string, container string) (error
 
 		buf := make([]byte, 2000)
 		numBytes, err := ioReadCloser.Read(buf)
-		Stdlog.Err(err)
+		main.Stdlog.Err(err)
 
 		if(numBytes == 0) {
 			break
@@ -113,7 +118,7 @@ func GetContainerLogs(namespace string, podName string, container string) (error
 		
 		message := string(buf[:numBytes])
 
-		Stdlog.Info(message)
+		main.Stdlog.Info(message)
 	}
 
 	return err
@@ -130,12 +135,12 @@ func initKubeClientSet() (error) {
 	var kubeConfig *rest.Config
 
 	outClusterConfig, err := clientcmd.BuildConfigFromFlags("", *kubeconfig)
-	Stdlog.Err(err)
+	main.Stdlog.Err(err)
 
 	if err != nil {
 
 		inClusterConfig, err := rest.InClusterConfig()
-		Stdlog.Err(err)
+		main.Stdlog.Err(err)
 
 		if err != nil {
 			return err
@@ -155,9 +160,46 @@ func initKubeClientSet() (error) {
 	return err
 }
 
-func getConfigFromConfigMap(namespace string, name string) {
+func initConfigFromConfigMapList() (v1.ConfigMap) {
 	
-	//configMap, err := kubeclient.CoreV1().ConfigMaps(namespace).Get(name, nil)
+	cmList, err := kubeclient.CoreV1().ConfigMaps("").List(metav1.ListOptions{})
+	
+	if err != nil {
+		main.Stdlog.Err(err)
+	}
+
+	var cm v1.ConfigMap = v1.ConfigMap{}
+
+	for _, v := range cmList.Items {
+		labelVal := v.Labels[main.ConfigMapLabelKey]
+		if labelVal == main.ConfigMapLabelVal {
+			cm = v
+			break
+		}
+	}
+
+	return cm
+}
+
+func watchConfigMapChanges() {
+	factory := informers.NewSharedInformerFactory(kubeclient, 0)
+
+	informer := factory.Core().V1().ConfigMaps().Informer()
+
+	stopWatching := make(chan struct{})
+	defer close(stopWatching)
+
+	informer.AddEventHandler(cache.ResourceEventHandlerFuncs{
+		AddFunc: func(obj interface{}) {
+		   cm, _ := obj.(v1.ConfigMap)
+		   main.onConfigAdded(cm)
+		},
+		UpdateFunc: func(oldObj interface{}, newObj interface{}) {
+			cm, _ := newObj.(v1.ConfigMap)
+			main.onConfigUpdated(cm)
+		},
+	})
+
 }
 
 func getTerminusSecrets() {

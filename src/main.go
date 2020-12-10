@@ -1,5 +1,9 @@
 package main
 
+import (
+	"github.com/weixian-zhang/Siphoner/kube"
+)
+
 var Stdlog Logger
 
 
@@ -10,17 +14,12 @@ func main() {
 	
 	initKubeClientSet()
 
-	ns := []string{"dev", "default"}
-	podL := make(map[string]string)
-	podL["run"] = "helloworld"
+	// ns := []string{"dev", "default"}
+	// podL := make(map[string]string)
+	// podL["run"] = "helloworld"
+	// pods, _ := GetPodsByFilteredNamespaces(ns, podL)
+	// getPodLogs(pods)
 
-	pods, _ := GetPodsByFilteredNamespaces(ns, podL)
+	initConfigFromConfigMapList()
 
-	getPodLogs(pods)
-	
-	//Stdlog.Err(err)
-	
-
-	
-	// Stdlog.Err(err)
 }

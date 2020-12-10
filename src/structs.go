@@ -6,10 +6,9 @@ import (
 
 type Config struct {
 	SiphonFrequencySeconds int		`yaml:"SiphonFrequencySeconds"`
-	ConfigNamespace string			`yaml:"ConfigMapNamespace"`
 	TerminusSecretNamespace string	`yaml:"TerminusSecretNamespace"`
-	SiphonKubeEvent bool 					`yaml:"KubeEvent"`
-	KeywordFilter []string	`yaml:"StdoutKeywordFilter"`
+	SiphonKubeEvent bool			`yaml:"KubeEvent"`
+	KeywordFilter []string			`yaml:"StdoutKeywordFilter"`
 	NamespaceFilter []string 		`yaml:"IncludeNamespaces"`
 	PodLabelsFilter []string 		`yaml:"IncludePodLabels"`
 }
@@ -27,4 +26,8 @@ type LogResult struct {
 	PodName string
 	Container string
 	Message string
+}
+
+type EventHubTerminusSecrets struct {
+
 }

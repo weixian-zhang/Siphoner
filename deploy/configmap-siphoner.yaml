@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: siphoner-configmap
+  labels:
+    logagent: siphoner
+data:   
+   settings:  |-
+      SiphonFrequencySeconds: 30
