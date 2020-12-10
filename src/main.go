@@ -1,9 +1,5 @@
 package main
 
-import (
-	"github.com/weixian-zhang/Siphoner/kube"
-)
-
 var Stdlog Logger
 
 
