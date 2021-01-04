@@ -1,16 +1,21 @@
 package main
 
 import (
-	"time"
+	
 )
+
+type Context struct {
+	Config *Config
+}
 
 type Config struct {
 	SiphonFrequencySeconds int		`yaml:"SiphonFrequencySeconds"`
-	TerminusSecretNamespace string	`yaml:"TerminusSecretNamespace"`
 	SiphonKubeEvent bool			`yaml:"KubeEvent"`
-	KeywordFilter []string			`yaml:"StdoutKeywordFilter"`
+	StdoutKeywordFilter []string	`yaml:"StdoutKeywordFilter"` //1 or more keyword to filter
+	StdoutRegexFilter []string		`yaml:"StdoutRegexFilter"` //or use regex expression. Regex takes priority
 	NamespaceFilter []string 		`yaml:"IncludeNamespaces"`
 	PodLabelsFilter []string 		`yaml:"IncludePodLabels"`
+	
 }
 
 type PodInfo struct {
@@ -18,16 +23,4 @@ type PodInfo struct {
 	Name string
 	Labels map[string]string
 	ContainerNames []string
-}
-
-type LogResult struct {
-	TimeGenerated time.Time
-	Namespace string
-	PodName string
-	Container string
-	Message string
-}
-
-type EventHubTerminusSecrets struct {
-
 }

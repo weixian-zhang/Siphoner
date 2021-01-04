@@ -19,7 +19,7 @@ import (
 
 var kubeclient *kubernetes.Clientset
 
-func GetPodsByFilteredNamespaces(namespaces []string, podLabels map[string]string) ([]PodInfo, error) {
+func getPodsByFilteredNamespaces(namespaces []string, podLabels map[string]string) ([]PodInfo, error) {
 	//https://stackoverflow.com/questions/51106923/labelselector-for-secrets-list-in-k8s
 
 	var pods []PodInfo
@@ -63,13 +63,13 @@ func getPodLogs(pods []PodInfo) {
 		for _, c := range p.ContainerNames {
 
 			
-			GetContainerLogs(p.Namespace, p.Name, c)
+			getContainerLogs(p.Namespace, p.Name, c)
 
 		} 
 	}
 }
 
-func GetContainerLogs(namespace string, podName string, container string) (error) {
+func getContainerLogs(namespace string, podName string, container string) (error) {
 	
 	// kubeTime := metav1.Time{Time: time.Now()}
 	// kubeTime.Add(-50 * time.Second)
@@ -158,7 +158,7 @@ func initKubeClientSet() (error) {
 	return err
 }
 
-func initConfigFromConfigMapList() (v1.ConfigMap) {
+func getAppConfigFromConfigMap() (v1.ConfigMap) {
 	
 	cmList, err := kubeclient.CoreV1().ConfigMaps("").List(metav1.ListOptions{})
 	

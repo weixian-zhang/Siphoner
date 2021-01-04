@@ -5,5 +5,11 @@ metadata:
   labels:
     logagent: siphoner
 data:   
-   settings:  |-
+   config:  |-
       SiphonFrequencySeconds: 30
+      KubeEvent: false
+      StdoutKeywordFilter: []
+      StdoutRegexFilter: ""
+      IncludeNamespaces: []
+      IncludePodLabels:
+         - "app=test"

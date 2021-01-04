@@ -16,6 +16,6 @@ func main() {
 	// pods, _ := GetPodsByFilteredNamespaces(ns, podL)
 	// getPodLogs(pods)
 
-	initConfigFromConfigMapList()
+	//initConfigFromConfigMapList()
 
 }
